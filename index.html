@@ -19,7 +19,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, setDoc, onSnapshot, deleteDoc, doc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Expose Firebase to global scope
         window.firebaseModules = { 
             initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken,
             getFirestore, collection, addDoc, setDoc, onSnapshot, deleteDoc, doc, query, orderBy, getDoc 
@@ -86,7 +85,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- Custom Icons ---
+        // --- Icon Components ---
         const IconWrapper = ({ children, className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
         );
@@ -105,32 +104,30 @@
         const RefreshCw = ({ className }) => <IconWrapper className={className}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></IconWrapper>;
         const Copy = ({ className }) => <IconWrapper className={className}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></IconWrapper>;
         const Lock = ({ className }) => <IconWrapper className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></IconWrapper>;
-        const Globe = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></IconWrapper>;
+        const Globe = ({ className }) => <IconWrapper className={className}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z" /></IconWrapper>;
         const Printer = ({ className }) => <IconWrapper className={className}><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></IconWrapper>;
+        const Download = ({ className }) => <IconWrapper className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></IconWrapper>;
+        const FileUp = ({ className }) => <IconWrapper className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><polyline points="9 15 12 12 15 15" /></IconWrapper>;
 
-        // --- Default Drill List (Restored 18 items) ---
         const defaultDrills = [
-            // Speed & Power
-            { id: 1, name: "80.60.40", type: "Speed", distPerRep: 175, suggestedReps: 6, recovery: "25s", recoveryType: "Rest", desc: "Start on try line. Run to far 22 (med speed). Return to close 22 (med speed). Turn and sprint to far 40m.", details: "Total Block: ~1000m." },
-            { id: 2, name: "BIFF", type: "Speed", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start try line on back. Run to 40m. Military roll. Run to far 40m. Run to far try line, 5x down-ups.", details: "Total Block: 1000m." },
-            { id: 3, name: "Modified Reven", type: "Speed", distPerRep: 150, suggestedReps: 7, recovery: "90s", recoveryType: "Restart", desc: "Try line -> 22m & back -> D-up -> 5m & back -> D-up. Sprint to 50m, turn, finish on 22m.", details: "Sharp High Speed." },
-            { id: 4, name: "Malcolms", type: "Speed", distPerRep: 40, suggestedReps: 6, recovery: "1:1", recoveryType: "Ratio", desc: "Start halfway on stomach. Sprint to 10m, d-up, sprint to far 10m, d-up, finish on halfway.", details: "Explosive. Backs 11s, Fwds 13s." },
-            { id: 5, name: "Falcon", type: "Speed", distPerRep: 100, suggestedReps: 10, recovery: "EMOM", recoveryType: "Restart", desc: "Start corner. Sprint to 22m & back. Jet diagonally across to middle. Turn and burn.", details: "Max Speed. Total Block: 1000m." },
-            { id: 6, name: "Warrior", type: "Speed", distPerRep: 100, suggestedReps: 10, recovery: "1:1", recoveryType: "Ratio", desc: "Start 40m. Sprint to far 40m, backpedal. Run to halfway & back. Run to far 40m.", details: "Max Speed. Total Block: 1000m." },
-            // Metabolic
-            { id: 7, name: "3-2-1", type: "Metabolic", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start try line. 3x to 5m & back. 2x to 22m & back. 1x to 50m & back.", details: "Target <45s." },
-            { id: 8, name: "Harlem", type: "Metabolic", distPerRep: 100, suggestedReps: 5, recovery: "2:1", recoveryType: "Ratio", desc: "20x commando's. Accelerate to 22m. 4x D-Up. Sprint to 50m. Roll sequence. Sprint home.", details: "Total Block: 500m." },
-            { id: 9, name: "Dagger", type: "Metabolic", distPerRep: 120, suggestedReps: 8, recovery: "60s", recoveryType: "Restart", desc: "2x D-ups. Sprint to 40m & back, then to 40m. Finish 1x D-up.", details: "Backs <30s, Fwds <33s." },
-            { id: 10, name: "Titanium", type: "Metabolic", distPerRep: 80, suggestedReps: 6, recovery: "45s", recoveryType: "Restart", desc: "Try line -> Military crawl 5m. Run to 40m & back to 5m. Crawl back last 5m.", details: "Explosive. Backs <24s." },
-            { id: 11, name: "The Hound", type: "Metabolic", distPerRep: 130, suggestedReps: 8, recovery: "Walk Back", recoveryType: "Rest", desc: "Try line -> Run 22m & back, 1x d-up. Run 22m, roll, continue to halfway. Walk back.", details: "Explosive." },
-            { id: 12, name: "Modified 88's", type: "Metabolic", distPerRep: 88, suggestedReps: 12, recovery: "1:3", recoveryType: "Ratio", desc: "Start try line. Sprint to 22m & back, 2x in a row. Forwards D-up on turns.", details: "Total Block: ~1000m." },
-            // Endurance
-            { id: 13, name: "Double 150", type: "Endurance", distPerRep: 300, suggestedReps: 4, recovery: "90s", recoveryType: "Restart", desc: "Try line -> Far try line -> Halfway -> Far try line -> Return to start.", details: "Medium Speed. Target <60s." },
-            { id: 14, name: "Coathanger", type: "Endurance", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start halfway. Run diagonally under posts. Run under opposite posts. Finish at start.", details: "Total Block: 1000m." },
-            { id: 15, name: "Broken Bronco", type: "Endurance", distPerRep: 240, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Try line -> 20m & back. 40m & back. 60m & back. Finish at start.", details: "Backs 50-55s." },
-            { id: 16, name: "The 40:20", type: "Endurance", distPerRep: 250, suggestedReps: 4, recovery: "120s", recoveryType: "Restart", desc: "Start try line. Run to far 40m & back. Run to far 22m & back. Finish at start.", details: "Total Block: 1000m." },
-            { id: 17, name: "The Lion Heart", type: "Endurance", distPerRep: 250, suggestedReps: 4, recovery: "120s", recoveryType: "Restart", desc: "Try line -> Halfway & back, d-up. 22m & back, d-up. Halfway & back.", details: "Medium Speed." },
-            { id: 18, name: "200:100", type: "Endurance", distPerRep: 300, suggestedReps: 4, recovery: "30s/120s", recoveryType: "Rest", desc: "Try line -> Far try line & back (200m). Rest 30s. Sprint 100m. Rest 120s.", details: "Total Block: ~1200m." }
+            { id: 1, name: "80.60.40", type: "Speed", distPerRep: 175, suggestedReps: 6, recovery: "25s", recoveryType: "Rest", desc: "Start try line. Run far 22, back to close 22. Turn and sprint far 40m." },
+            { id: 2, name: "BIFF", type: "Speed", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start back. Roll front. Run 40m. Roll. Run far 40m. Run far try line, 5x down-ups." },
+            { id: 3, name: "Modified Reven", type: "Speed", distPerRep: 150, suggestedReps: 7, recovery: "90s", recoveryType: "Restart", desc: "Try line -> 22m & back -> D-up -> 5m & back -> D-up. Sprint 50m, turn, finish on 22m." },
+            { id: 4, name: "Malcolms", type: "Speed", distPerRep: 40, suggestedReps: 6, recovery: "1:1", recoveryType: "Ratio", desc: "Start halfway on stomach. Sprint 10m, d-up, sprint far 10m, d-up, finish on halfway." },
+            { id: 5, name: "Falcon", type: "Speed", distPerRep: 100, suggestedReps: 10, recovery: "EMOM", recoveryType: "Restart", desc: "Start corner. Sprint 22m & back. Jet diagonally middle. Turn and burn." },
+            { id: 6, name: "Warrior", type: "Speed", distPerRep: 100, suggestedReps: 10, recovery: "1:1", recoveryType: "Ratio", desc: "Start 40m. Sprint far 40m, backpedal. Run halfway & back. Run far 40m." },
+            { id: 7, name: "3-2-1", type: "Metabolic", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start try line. 3x to 5m & back. 2x to 22m & back. 1x to 50m & back." },
+            { id: 8, name: "Harlem", type: "Metabolic", distPerRep: 100, suggestedReps: 5, recovery: "2:1", recoveryType: "Ratio", desc: "20x commando's. Accelerate to 22m. 4x D-Up. Sprint 50m. Roll sequence. Sprint home." },
+            { id: 9, name: "Dagger", type: "Metabolic", distPerRep: 120, suggestedReps: 8, recovery: "60s", recoveryType: "Restart", desc: "2x D-ups. Sprint 40m & back, then to 40m. Finish 1x D-up." },
+            { id: 10, name: "Titanium", type: "Metabolic", distPerRep: 80, suggestedReps: 6, recovery: "45s", recoveryType: "Restart", desc: "Try line -> Military crawl 5m. Run 40m & back to 5m. Crawl back last 5m." },
+            { id: 11, name: "The Hound", type: "Metabolic", distPerRep: 130, suggestedReps: 8, recovery: "Walk Back", recoveryType: "Rest", desc: "Try line -> Run 22m & back, 1x d-up. Run 22m, roll, continue halfway. Walk back." },
+            { id: 12, name: "Modified 88's", type: "Metabolic", distPerRep: 88, suggestedReps: 12, recovery: "1:3", recoveryType: "Ratio", desc: "Start try line. Sprint 22m & back, 2x in a row. Forwards D-up on turns." },
+            { id: 13, name: "Double 150", type: "Endurance", distPerRep: 300, suggestedReps: 4, recovery: "90s", recoveryType: "Restart", desc: "Try line -> Far try line -> Halfway -> Far try line -> Return with 100m push." },
+            { id: 14, name: "Coathanger", type: "Endurance", distPerRep: 200, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Start halfway. Run diagonally under posts. Run under opposite posts. Finish start." },
+            { id: 15, name: "Broken Bronco", type: "Endurance", distPerRep: 240, suggestedReps: 5, recovery: "90s", recoveryType: "Restart", desc: "Try line -> 20m & back. 40m & back. 60m & back. Finish at start." },
+            { id: 16, name: "The 40:20", type: "Endurance", distPerRep: 250, suggestedReps: 4, recovery: "120s", recoveryType: "Restart", desc: "Start try line. Run far 40m & back. Run far 22m & back. Finish start." },
+            { id: 17, name: "The Lion Heart", type: "Endurance", distPerRep: 250, suggestedReps: 4, recovery: "120s", recoveryType: "Restart", desc: "Try line -> Halfway & back, d-up. 22m & back, d-up. Halfway & back." },
+            { id: 18, name: "200:100", type: "Endurance", distPerRep: 300, suggestedReps: 4, recovery: "30s/120s", recoveryType: "Rest", desc: "Try line -> Far try line & back (200m). Rest 30s. Sprint 100m. Rest 120s." }
         ];
 
         const App = () => {
@@ -151,6 +148,7 @@
             const [session, setSession] = useState([]);
             
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'hounds-default-app';
+            const fileInputRef = useRef(null);
 
             const showNotification = (message, type = 'success') => {
                 setNotification({ message, type });
@@ -182,7 +180,7 @@
                                 setUser(u);
                                 setFirebaseReady(true);
                                 const userRef = doc(database, 'artifacts', appId, 'public', 'data', 'users', u.uid);
-                                const displayName = u.displayName || `Coach ${u.uid.slice(0,4).toUpperCase()}`;
+                                const displayName = `Coach ${u.uid.slice(0,4).toUpperCase()}`;
                                 await setDoc(userRef, { uid: u.uid, lastSeen: Date.now(), displayName }, { merge: true });
                                 setUserProfile({ displayName });
                             } else {
@@ -211,24 +209,69 @@
                     setPrivateDrills(ss.docs.map(d => ({ id: d.id, ...d.data(), isCustom: true, isCloud: true, isPrivate: true })));
                 }, (err) => console.warn("Private Fetch Error", err));
 
-                return () => { pubUnsub(); privUnsub(); };
+                return () => { if(pubUnsub) pubUnsub(); if(privUnsub) privUnsub(); };
             }, [db, user, appId]);
 
             useEffect(() => {
                 const saved = localStorage.getItem('localDrills');
-                if (saved) setLocalDrills(JSON.parse(saved).map(d => ({ ...d, isLocal: true })));
+                if (saved) {
+                    try { setLocalDrills(JSON.parse(saved).map(d => ({ ...d, isLocal: true }))); }
+                    catch(e) { console.error("Local Load Error", e); }
+                }
             }, []);
 
             const filteredDrills = useMemo(() => {
                 const map = new Map();
-                // Priority: Private -> Local -> Public -> Default
                 [...privateDrills, ...localDrills, ...publicDrills, ...defaultDrills].forEach(d => { if (!map.has(d.id)) map.set(d.id, d); });
                 return Array.from(map.values()).filter(d => (filter === 'All' || d.type === filter) && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
             }, [filter, searchTerm, publicDrills, privateDrills, localDrills]);
 
+            // --- EXPORT / IMPORT (Save As) ---
+            const handleExportLocal = () => {
+                if (localDrills.length === 0) return showNotification("No local drills to export", "warning");
+                const data = JSON.stringify(localDrills, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `hounds_local_library_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showNotification("Library exported successfully", "success");
+            };
+
+            const handleImportLocal = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        const merged = [...localDrills, ...imported];
+                        const uniqueMap = new Map();
+                        merged.forEach(d => uniqueMap.set(d.id, d));
+                        const final = Array.from(uniqueMap.values());
+                        setLocalDrills(final);
+                        localStorage.setItem('localDrills', JSON.stringify(final));
+                        showNotification(`Imported ${imported.length} drills`, "success");
+                    } catch(err) { showNotification("Invalid file format", "warning"); }
+                };
+                reader.readAsText(file);
+            };
+
+            const handleManualSync = () => {
+                setIsSyncing(true);
+                setTimeout(() => {
+                    setIsSyncing(false);
+                    showNotification("Synced with Cloud", "success");
+                }, 800);
+            };
+
             const handleSaveCloud = async (e, visibilityIntent) => {
                 e.preventDefault();
-                if (!user || !db) return showNotification("Not connected to Cloud", "warning");
+                if (!user || !db) return showNotification("Syncing...", "warning");
                 
                 setIsSyncing(true);
                 const { addDoc, collection } = window.firebaseModules;
@@ -250,21 +293,31 @@
                 try {
                     const isTeam = visibilityIntent === 'Team';
                     const path = isTeam ? ['artifacts', appId, 'public', 'data', 'drills'] : ['artifacts', appId, 'users', user.uid, 'drills'];
-                    
-                    await addDoc(collection(db, ...path), { 
-                        ...drillData, 
-                        isPublic: isTeam,
-                        isPrivate: !isTeam 
-                    });
-                    
+                    await addDoc(collection(db, ...path), { ...drillData, isPublic: isTeam, isPrivate: !isTeam });
                     showNotification(`Saved to ${isTeam ? 'Team' : 'Private'} Library`);
                     setIsModalOpen(false);
-                } catch (err) { 
-                    console.error(err);
-                    showNotification("Save Failed: Check Permissions", "warning"); 
-                } finally {
-                    setIsSyncing(false);
-                }
+                } catch (err) { showNotification("Save Failed: Permissions", "warning"); }
+                finally { setIsSyncing(false); }
+            };
+
+            const handleSaveLocal = () => {
+                const form = document.getElementById('drillForm');
+                const formData = new FormData(form);
+                const drillData = {
+                    id: `local-${Date.now()}`,
+                    name: formData.get('name'),
+                    type: formData.get('type'),
+                    distPerRep: Number(formData.get('dist')),
+                    suggestedReps: Number(formData.get('reps')),
+                    recovery: formData.get('recovery'),
+                    desc: formData.get('desc'),
+                    isLocal: true
+                };
+                const next = [...localDrills, drillData];
+                setLocalDrills(next);
+                localStorage.setItem('localDrills', JSON.stringify(next));
+                showNotification("Saved to Device");
+                setIsModalOpen(false);
             };
 
             const handleCopyDrill = async (d) => {
@@ -272,15 +325,9 @@
                 const { addDoc, collection } = window.firebaseModules;
                 try {
                     await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'drills'), {
-                        ...d, 
-                        name: `Copy of ${d.name}`, 
-                        copiedFrom: d.id, 
-                        createdBy: user.uid, 
-                        createdAt: Date.now(), 
-                        isPublic: false,
-                        isPrivate: true 
+                        ...d, name: `Copy of ${d.name}`, copiedFrom: d.id, createdBy: user.uid, createdAt: Date.now(), isPublic: false, isPrivate: true 
                     });
-                    showNotification("Copied to My Drills");
+                    showNotification("Copied to Private Library");
                 } catch (e) { showNotification("Copy Failed", "warning"); }
             };
 
@@ -300,99 +347,58 @@
                 } catch(e) { showNotification("Delete Failed", "warning"); }
             };
 
-            const handleManualSync = () => {
-                 setIsSyncing(true);
-                 setTimeout(() => {
-                     setIsSyncing(false);
-                     showNotification("Synced with Cloud", "success");
-                 }, 800);
-            };
+            const removeDrillFromSession = (uid) => setSession(session.filter(x => x.uniqueId !== uid));
+            const updateSessionItem = (uid, field, val) => setSession(session.map(x => x.uniqueId === uid ? { ...x, [field]: val } : x));
+            const toggleRecoveryType = (uid) => setSession(session.map(x => x.uniqueId === uid ? { ...x, customRecoveryType: x.customRecoveryType === 'Restart' ? 'Rest' : 'Restart' } : x));
 
             const handlePrintSession = () => {
                 const win = window.open('', '_blank');
-                const totalMeters = session.reduce((a,b)=>a+(b.customDist*b.reps),0);
+                const totalMeters = session.reduce((a,b) => a + (b.customDist * b.reps * (b.sets || 1)), 0);
                 const content = session.map((it, i) => `
-                    <div style="border-bottom:1px solid #eee;padding:15px;">
-                        <div style="display:flex;justify-content:space-between;font-family:sans-serif;">
-                            <b>${i+1}. ${it.name.toUpperCase()}</b>
-                            <span>${it.reps} x ${it.customDist}m</span>
+                    <div style="border-bottom:1px solid #eee;padding:15px;page-break-inside: avoid;">
+                        <div style="display:flex;justify-content:space-between;font-family:sans-serif;margin-bottom:5px;">
+                            <b style="font-size:16px;">${i+1}. ${it.name.toUpperCase()}</b>
+                            <span style="font-weight:bold;">${it.sets || 1} x ${it.reps} x ${it.customDist}m</span>
                         </div>
-                        <div style="font-size:12px;color:green;margin-top:5px;">
-                            Recovery: ${it.customRecovery} (${it.customRecoveryType || 'Restart'})
-                        </div>
-                        <div style="font-size:12px;color:#666;margin-top:5px;font-style:italic;">
-                            ${it.desc}
+                        <div style="font-size:12px;color:#006241;font-weight:bold;">
+                            RECOVERY: ${it.customRecovery} (${it.customRecoveryType || 'Restart'})
                         </div>
                     </div>`).join('');
                 
-                win.document.write(`
-                    <html>
-                        <head><title>Hounds Session Plan</title></head>
-                        <body style="padding:40px;font-family:sans-serif;">
-                            <h1 style="color:#006241;border-bottom:3px solid #26d07c;padding-bottom:10px;">HOUNDS SESSION</h1>
-                            <div style="background:#f5f5f5;padding:15px;border-radius:8px;margin-bottom:20px;">
-                                <b>Total Volume:</b> ${totalMeters.toLocaleString()}m | <b>Drills:</b> ${session.length}
-                            </div>
-                            ${content}
-                            <script>window.onload=()=>window.print()<\/script>
-                        </body>
-                    </html>`);
+                win.document.write(`<html><body style="font-family:sans-serif;padding:40px;color:#323a45;"><h1 style="text-align:center;border-bottom:3px solid #26d07c;padding-bottom:10px;">CHICAGO HOUNDS SESSION</h1><div style="display:flex;justify-content:space-between;background:#f5f5f5;padding:15px;border-radius:10px;margin-bottom:30px;font-size:14px;"><div><b>TOTAL VOLUME:</b> ${totalMeters.toLocaleString()}m</div><div><b>DRILLS:</b> ${session.length}</div></div>${content}<script>window.onload=()=>window.print()<\/script></body></html>`);
                 win.document.close();
             };
 
-            const toggleRecoveryType = (uniqueId) => {
-                setSession(prev => prev.map(item => 
-                    item.uniqueId === uniqueId ? { ...item, customRecoveryType: item.customRecoveryType === 'Restart' ? 'Rest' : 'Restart' } : item
-                ));
-            };
-
-            const totalVol = session.reduce((a,b) => a + (b.customDist * b.reps), 0);
+            // VOLUME INCLUDES SETS
+            const totalVol = session.reduce((a,b) => a + (b.customDist * b.reps * (b.sets || 1)), 0);
 
             return (
                 <div className="min-h-screen pb-40 bg-hounds-darkGray font-sans text-hounds-lightGray">
                     {notification && (
-                        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full bg-hounds-darkGray border border-hounds-kellyGreen shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+                        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full bg-hounds-darkGray border border-hounds-kellyGreen shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
                             <CheckCircle className="w-5 h-5 text-hounds-kellyGreen" /> {notification.message}
                         </div>
                     )}
 
-                    <header className="bg-hounds-darkGray border-b border-hounds-gray/30 sticky top-0 z-20 p-4">
+                    <header className="bg-hounds-darkGray border-b border-hounds-gray/30 p-4 sticky top-0 z-20">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div>
-                                <h1 className="text-3xl font-brand font-bold text-white leading-none">HOUNDS <span className="text-hounds-kellyGreen">DRILLS</span></h1>
+                                <h1 className="text-3xl font-brand font-bold text-white leading-none uppercase tracking-wider">HOUNDS <span className="text-hounds-kellyGreen">DRILLS</span></h1>
                                 <div className="text-xs flex items-center gap-2 mt-1">
-                                    <span className="text-hounds-lightGray uppercase tracking-widest font-sans flex items-center gap-2">
-                                        Conditioning Library
-                                        {firebaseReady ? (
-                                            <span className="text-green-400 flex items-center gap-1 ml-2 border-l border-white/20 pl-2">
-                                                <span className={`w-1.5 h-1.5 rounded-full bg-green-400 ${isSyncing ? 'animate-ping' : ''}`}></span> 
-                                                {userProfile?.displayName || 'Coach'}
-                                                <button onClick={handleManualSync} title="Sync Now" className="ml-1 hover:text-white transition-colors">
-                                                    <RefreshCw className="w-3 h-3" />
-                                                </button>
-                                            </span>
-                                        ) : (
-                                            <span className="text-orange-400 flex items-center gap-1 ml-2 border-l border-white/20 pl-2">
-                                                <span className="animate-pulse">Connecting...</span>
-                                            </span>
-                                        )}
-                                    </span>
+                                    <span className={`w-2 h-2 rounded-full ${firebaseReady ? 'bg-green-400 animate-pulse' : 'bg-orange-400'}`}></span>
+                                    {firebaseReady ? userProfile?.displayName : 'Initializing Handshake...'}
+                                    {isSyncing && <RefreshCw className="w-3 h-3 animate-spin text-hounds-kellyGreen" />}
                                 </div>
                             </div>
                             <div className="flex gap-3">
-                                <div className="bg-hounds-gray/20 p-2 rounded flex items-center gap-2 border border-hounds-gray focus-within:border-hounds-kellyGreen transition-colors">
+                                <div className="bg-hounds-gray/20 p-2 rounded flex items-center gap-2 border border-hounds-gray transition-colors focus-within:border-hounds-kellyGreen">
                                     <Search className="w-4 h-4" />
                                     <input value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Search..." className="bg-transparent outline-none text-white text-sm" />
                                 </div>
-                                <button onClick={()=>setIsModalOpen(true)} className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                                <button onClick={()=>setIsModalOpen(true)} className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
                                     <Plus className="w-4 h-4" /> CREATE
                                 </button>
                             </div>
-                        </div>
-                        <div className="flex gap-2 mt-4 max-w-7xl mx-auto overflow-x-auto no-scrollbar">
-                            {['All', 'Speed', 'Metabolic', 'Endurance'].map(t => (
-                                <button key={t} onClick={()=>setFilter(t)} className={`px-6 py-1 rounded-full border text-sm font-bold transition-all ${filter === t ? 'bg-hounds-kellyGreen text-hounds-darkGray border-hounds-kellyGreen shadow-[0_0_10px_rgba(38,208,124,0.3)]' : 'border-hounds-gray text-hounds-gray hover:border-hounds-kellyGreen hover:text-white'}`}>{t}</button>
-                            ))}
                         </div>
                     </header>
 
@@ -404,73 +410,70 @@
                                     {d.isPublic && user && d.createdBy === user.uid && <div className="bg-hounds-kellyGreen text-hounds-darkGray text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg font-brand uppercase tracking-wider"><UserIcon className="w-3 h-3"/> MINE</div>}
                                     {d.isPrivate && <div className="bg-hounds-kellyGreen text-hounds-darkGray text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg font-brand uppercase tracking-wider"><Lock className="w-3 h-3"/> PRIVATE</div>}
                                     {d.isLocal && <div className="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg font-brand uppercase tracking-wider"><UserIcon className="w-3 h-3"/> LOCAL</div>}
-                                    {d.copiedFrom && <div className="bg-purple-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg font-brand uppercase tracking-wider"><Copy className="w-3 h-3"/> FORKED</div>}
                                 </div>
-
                                 <div className="mb-2 text-xs font-bold text-hounds-kellyGreen uppercase tracking-widest">{d.type}</div>
                                 <h3 className="text-2xl font-brand text-white uppercase mb-2 leading-none">{d.name}</h3>
                                 <p className="text-sm text-gray-400 mb-6 line-clamp-3 flex-grow">{d.desc}</p>
                                 <div className="flex justify-between items-center border-t border-hounds-gray pt-4">
                                     <div className="flex gap-2">
-                                        {d.createdBy === user?.uid && <button onClick={()=>deleteDrill(d)} className="text-gray-500 hover:text-red-400 p-1 transition-colors" title="Delete"><Trash className="w-4 h-4" /></button>}
+                                        {(d.createdBy === user?.uid || d.isLocal) && <button onClick={()=>deleteDrill(d)} className="text-gray-500 hover:text-red-400 p-1 transition-colors" title="Delete"><Trash className="w-4 h-4" /></button>}
                                         {d.isPublic && d.createdBy !== user?.uid && <button onClick={()=>handleCopyDrill(d)} className="text-gray-500 hover:text-hounds-brightBlue p-1 transition-colors" title="Copy to My Drills"><Copy className="w-4 h-4" /></button>}
                                     </div>
-                                    <button onClick={()=>{ setSession([...session, { ...d, uniqueId: Date.now(), customDist: d.distPerRep, reps: d.suggestedReps || 1, customRecovery: d.recovery, customRecoveryType: d.recoveryType || 'Restart' }]); setIsCalcOpen(true); }} className="bg-hounds-darkGreen hover:bg-hounds-kellyGreen hover:text-hounds-darkGray text-white px-4 py-1 rounded font-bold text-xs transition-all uppercase">Add to Session +</button>
+                                    <button onClick={()=>{ setSession([...session, { ...d, uniqueId: Date.now(), sets: 1, customDist: d.distPerRep, reps: d.suggestedReps || 1, customRecovery: d.recovery, customRecoveryType: 'Restart' }]); setIsCalcOpen(true); }} className="bg-hounds-darkGreen hover:bg-hounds-kellyGreen hover:text-hounds-darkGray text-white px-4 py-1 rounded font-bold text-xs transition-all uppercase">Add to Session +</button>
                                 </div>
                             </div>
                         ))}
                     </main>
 
-                    <div className={`fixed bottom-0 inset-x-0 bg-hounds-darkGray/95 backdrop-blur-md border-t-4 border-hounds-kellyGreen transition-all shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40 ${isCalcOpen ? 'h-80' : 'h-16'}`}>
+                    <div className={`fixed bottom-0 inset-x-0 bg-hounds-darkGray/95 backdrop-blur-md border-t-4 border-hounds-kellyGreen transition-all shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40 ${isCalcOpen ? 'h-[400px]' : 'h-16'}`}>
                         <div onClick={()=>setIsCalcOpen(!isCalcOpen)} className="h-16 flex justify-between items-center px-6 cursor-pointer hover:bg-white/5 transition-colors">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-hounds-kellyGreen/10 rounded-full"><Calculator className="w-6 h-6 text-hounds-kellyGreen" /></div>
+                                <Calculator className="w-6 h-6 text-hounds-kellyGreen" />
                                 <span className="font-brand font-bold text-white text-xl tracking-wide uppercase">SESSION BUILDER ({session.length})</span>
                             </div>
                             <div className="flex items-center gap-6">
                                 <div className="text-right">
-                                    <div className="text-[10px] text-gray-400 uppercase tracking-widest">Total Volume</div>
-                                    <div className="text-2xl font-racing text-white neon-text">{totalVol.toLocaleString()}m</div>
+                                    <div className="text-[10px] text-gray-400 uppercase tracking-widest leading-none mb-1">Total Volume</div>
+                                    <div className="text-2xl font-racing text-white neon-text leading-none">{totalVol.toLocaleString()}m</div>
                                 </div>
                                 <ChevronUp className={`w-6 h-6 text-hounds-kellyGreen transition-transform duration-300 ${isCalcOpen ? 'rotate-180' : ''}`} />
                             </div>
                         </div>
                         {isCalcOpen && (
-                            <div className="max-w-7xl mx-auto p-4 flex gap-4 h-64 overflow-hidden">
+                            <div className="max-w-7xl mx-auto p-4 flex gap-4 h-[330px] overflow-hidden">
                                 <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                     {session.length === 0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center opacity-30 text-hounds-gray">
-                                            <Dumbbell className="w-12 h-12 mb-2" />
-                                            <p className="font-brand text-lg uppercase tracking-widest">Session is Empty</p>
-                                        </div>
+                                        <div className="h-full flex flex-col items-center justify-center opacity-30 text-hounds-gray"><Dumbbell className="w-12 h-12 mb-2"/><p className="font-brand text-lg uppercase tracking-widest">Session is Empty</p></div>
                                     ) : session.map(s => (
                                         <div key={s.uniqueId} className="bg-hounds-gray/10 p-3 rounded flex justify-between items-center border border-hounds-gray/30 hover:border-hounds-kellyGreen/30 transition-all animate-in slide-in-from-left-2 fade-in">
                                             <div className="flex flex-col">
                                                 <span className="font-brand text-white uppercase text-lg leading-none mb-1">{s.name}</span>
                                                 <div className="flex items-center gap-2 cursor-pointer group" onClick={() => toggleRecoveryType(s.uniqueId)}>
                                                     <RefreshCw className="w-2.5 h-2.5 text-hounds-kellyGreen group-hover:rotate-180 transition-transform duration-500" />
-                                                    <span className="text-[10px] font-bold text-hounds-kellyGreen uppercase tracking-tighter">
-                                                        {s.customRecoveryType === 'Restart' ? 'Restart' : 'Rest'} Interval
-                                                    </span>
+                                                    <span className="text-[10px] font-bold text-hounds-kellyGreen uppercase tracking-tighter">{s.customRecoveryType} Interval</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex flex-col items-center">
+                                                    <label className="text-[8px] uppercase font-bold text-hounds-gray">Sets</label>
+                                                    <input type="number" min="1" value={s.sets || 1} onChange={e=>updateSessionItem(s.uniqueId, 'sets', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-10 text-center rounded text-white font-mono text-xs" />
+                                                </div>
                                                 <div className="flex flex-col items-center">
                                                     <label className="text-[8px] uppercase font-bold text-hounds-gray">Reps</label>
-                                                    <input type="number" value={s.reps} onChange={e=>setSession(session.map(x=>x.uniqueId===s.uniqueId?{...x,reps:Number(e.target.value)}:x))} className="bg-hounds-darkGray border border-hounds-gray/50 w-12 text-center rounded text-white font-mono text-xs" />
+                                                    <input type="number" value={s.reps} onChange={e=>updateSessionItem(s.uniqueId, 'reps', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-10 text-center rounded text-white font-mono text-xs" />
                                                 </div>
                                                 <div className="flex flex-col items-center">
                                                     <label className="text-[8px] uppercase font-bold text-hounds-gray">Meters</label>
-                                                    <input type="number" value={s.customDist} onChange={e=>setSession(session.map(x=>x.uniqueId===s.uniqueId?{...x,customDist:Number(e.target.value)}:x))} className="bg-hounds-darkGray border border-hounds-gray/50 w-20 text-center rounded text-white font-mono text-xs" />
+                                                    <input type="number" value={s.customDist} onChange={e=>updateSessionItem(s.uniqueId, 'customDist', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-16 text-center rounded text-white font-mono text-xs" />
                                                 </div>
-                                                <button onClick={()=>setSession(session.filter(x=>x.uniqueId!==s.uniqueId))} className="text-gray-500 hover:text-red-400 p-2 transition-colors"><Trash className="w-5 h-5" /></button>
+                                                <button onClick={()=>removeDrillFromSession(s.uniqueId)} className="text-gray-500 hover:text-red-400 p-2 transition-colors"><Trash className="w-5 h-5" /></button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="w-64 flex flex-col justify-end gap-3 pb-2">
                                     <button onClick={handlePrintSession} className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray p-3 rounded-lg font-bold w-full flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"><Printer className="w-4 h-4"/> PRINT PDF</button>
-                                    <button onClick={()=>setSession([])} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-3 rounded-lg font-bold w-full transition-all uppercase tracking-widest text-xs">Clear All</button>
+                                    <button onClick={()=>setSession([])} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-3 rounded-lg font-bold w-full uppercase tracking-widest text-xs">Clear All</button>
                                 </div>
                             </div>
                         )}
@@ -478,67 +481,47 @@
 
                     {isModalOpen && (
                         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 modal-overlay">
-                            <form 
-                                onSubmit={(e) => {
-                                    // Use a state-based approach or hidden input to pass the intent
-                                    const intent = e.nativeEvent.submitter?.getAttribute('data-visibility') || 'Private';
-                                    handleSaveCloud(e, intent);
-                                }} 
-                                className="bg-hounds-darkGray border border-hounds-gray p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl"
-                            >
+                            <form id="drillForm" onSubmit={(e) => {
+                                const intent = e.nativeEvent.submitter?.getAttribute('data-visibility') || 'Private';
+                                handleSaveCloud(e, intent);
+                            }} className="bg-hounds-darkGray border border-hounds-gray p-8 rounded-2xl w-full max-w-md space-y-6 shadow-2xl">
                                 <div className="flex justify-between items-center border-b border-hounds-gray pb-4">
-                                    <h2 className="text-3xl font-brand font-bold text-white uppercase tracking-wide">Create Custom Drill</h2>
-                                    <button type="button" onClick={()=>setIsModalOpen(false)} className="text-gray-500 hover:text-white"><X className="w-6 h-6"/></button>
+                                    <h2 className="text-3xl font-brand font-bold text-white uppercase tracking-wide">Create Drill</h2>
+                                    <button type="button" onClick={()=>setIsModalOpen(false)} className="text-gray-500 hover:text-white transition-colors"><X className="w-6 h-6"/></button>
                                 </div>
-                                
                                 <div className="space-y-4">
-                                    <div>
-                                        <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Drill Name</label>
-                                        <input name="name" required placeholder="e.g. Hill Sprints" className="w-full bg-hounds-gray/20 p-3 rounded-lg outline-none border border-hounds-gray focus:border-hounds-kellyGreen text-white transition-colors" />
-                                    </div>
-                                    
+                                    <input name="name" required placeholder="Drill Name" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray focus:border-hounds-kellyGreen text-white outline-none" />
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Type</label>
-                                            <select name="type" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen">
-                                                <option value="Speed">Speed</option><option value="Metabolic">Metabolic</option><option value="Endurance">Endurance</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Dist (m)</label>
-                                            <input name="dist" type="number" required placeholder="100" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
-                                        </div>
+                                        <select name="type" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen">
+                                            <option value="Speed">Speed</option><option value="Metabolic">Metabolic</option><option value="Endurance">Endurance</option>
+                                        </select>
+                                        <input name="dist" type="number" required placeholder="Dist (m)" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
                                     </div>
-
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Reps</label>
-                                            <input name="reps" type="number" required placeholder="5" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Recovery</label>
-                                            <input name="recovery" placeholder="e.g. 60s" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
-                                        </div>
+                                        <input name="reps" type="number" required placeholder="Reps" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
+                                        <input name="recovery" placeholder="Recovery (60s)" className="w-full bg-hounds-gray/20 p-3 rounded-lg border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen" />
                                     </div>
-
-                                    <div>
-                                        <label className="text-[10px] font-bold text-hounds-gray uppercase tracking-widest ml-1">Description</label>
-                                        <textarea name="desc" placeholder="Instructions..." className="w-full bg-hounds-gray/20 p-3 rounded-lg h-24 border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen resize-none" />
-                                    </div>
+                                    <textarea name="desc" placeholder="Instructions..." className="w-full bg-hounds-gray/20 p-3 rounded-lg h-24 border border-hounds-gray text-white outline-none focus:border-hounds-kellyGreen resize-none" />
                                 </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <button type="submit" data-visibility="Private" className="flex-1 bg-hounds-kellyGreen hover:bg-hounds-darkGreen text-hounds-darkGray font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-500/10">SAVE PRIVATE</button>
-                                    <button type="submit" data-visibility="Team" className="flex-1 bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/10">SAVE TEAM</button>
+                                <div className="grid grid-cols-2 gap-3 pt-4">
+                                    <button type="submit" data-visibility="Private" className="bg-hounds-kellyGreen hover:bg-hounds-darkGreen text-hounds-darkGray font-bold py-4 rounded-xl transition-all shadow-lg">SAVE PRIVATE</button>
+                                    <button type="submit" data-visibility="Team" className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray font-bold py-4 rounded-xl transition-all shadow-lg">SAVE TEAM</button>
+                                    <button type="button" onClick={handleSaveLocal} className="col-span-2 text-hounds-gray uppercase text-[10px] font-bold tracking-widest hover:text-orange-400 pt-2 transition-colors">Emergency Save (Device Only)</button>
                                 </div>
                             </form>
                         </div>
                     )}
 
-                    <footer className="max-w-7xl mx-auto p-12 text-center text-hounds-gray/20 text-[10px] font-mono">
-                        <p>CHICAGO HOUNDS APP ID: {appId}</p>
-                        <p>AUTHENTICATED UID: {user?.uid || 'INITIALIZING...'}</p>
-                        <p className="mt-2">STRICT DATA MODE: ACTIVE</p>
+                    <footer className="max-w-7xl mx-auto p-12 text-center text-hounds-gray/20 text-[10px] font-mono border-t border-hounds-gray/10 mt-12">
+                        <p className="mb-4 font-bold">CHICAGO HOUNDS APP ID: {appId}</p>
+                        <div className="flex flex-wrap justify-center gap-6 mt-4">
+                            <button onClick={handleExportLocal} className="flex items-center gap-2 hover:text-orange-400 transition-colors uppercase font-bold"><Download className="w-3 h-3"/> Save Library As File</button>
+                            <label className="flex items-center gap-2 cursor-pointer hover:text-hounds-brightBlue transition-colors uppercase font-bold">
+                                <FileUp className="w-3 h-3"/> Open Library File
+                                <input type="file" ref={fileInputRef} onChange={handleImportLocal} className="hidden" accept=".json" />
+                            </label>
+                        </div>
+                        <p className="mt-8">STRICT DIAGNOSTICS: UID [{user?.uid || 'INITIALIZING'}] | LOCAL [{localDrills.length}]</p>
                     </footer>
                 </div>
             );
