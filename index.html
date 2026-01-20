@@ -149,13 +149,14 @@
             
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'hounds-default-app';
             const fileInputRef = useRef(null);
+            const scrollRef = useRef(null);
 
             const showNotification = (message, type = 'success') => {
                 setNotification({ message, type });
                 setTimeout(() => setNotification(null), 3000);
             };
 
-            // --- Robust Firebase Setup ---
+            // --- Firebase Init ---
             useEffect(() => {
                 const init = async () => {
                     if (!window.firebaseModules) return;
@@ -189,12 +190,11 @@
                         });
                     } catch (e) { console.error("Firebase Init Error", e); }
                 };
-
                 const poller = setInterval(() => { if (window.firebaseModules) { init(); clearInterval(poller); } }, 100);
                 return () => clearInterval(poller);
             }, []);
 
-            // --- Data Fetching ---
+            // --- Data Listeners ---
             useEffect(() => {
                 if (!db || !user) return;
                 const { collection, onSnapshot, query } = window.firebaseModules;
@@ -226,7 +226,7 @@
                 return Array.from(map.values()).filter(d => (filter === 'All' || d.type === filter) && d.name.toLowerCase().includes(searchTerm.toLowerCase()));
             }, [filter, searchTerm, publicDrills, privateDrills, localDrills]);
 
-            // --- EXPORT / IMPORT (Save As) ---
+            // --- EXPORT / IMPORT ---
             const handleExportLocal = () => {
                 if (localDrills.length === 0) return showNotification("No local drills to export", "warning");
                 const data = JSON.stringify(localDrills, null, 2);
@@ -347,6 +347,7 @@
                 } catch(e) { showNotification("Delete Failed", "warning"); }
             };
 
+            // Builder Helpers
             const removeDrillFromSession = (uid) => setSession(session.filter(x => x.uniqueId !== uid));
             const updateSessionItem = (uid, field, val) => setSession(session.map(x => x.uniqueId === uid ? { ...x, [field]: val } : x));
             const toggleRecoveryType = (uid) => setSession(session.map(x => x.uniqueId === uid ? { ...x, customRecoveryType: x.customRecoveryType === 'Restart' ? 'Rest' : 'Restart' } : x));
@@ -369,7 +370,6 @@
                 win.document.close();
             };
 
-            // VOLUME INCLUDES SETS
             const totalVol = session.reduce((a,b) => a + (b.customDist * b.reps * (b.sets || 1)), 0);
 
             return (
@@ -445,35 +445,40 @@
                                     {session.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center opacity-30 text-hounds-gray"><Dumbbell className="w-12 h-12 mb-2"/><p className="font-brand text-lg uppercase tracking-widest">Session is Empty</p></div>
                                     ) : session.map(s => (
-                                        <div key={s.uniqueId} className="bg-hounds-gray/10 p-3 rounded flex justify-between items-center border border-hounds-gray/30 hover:border-hounds-kellyGreen/30 transition-all animate-in slide-in-from-left-2 fade-in">
+                                        <div key={s.uniqueId} className="bg-hounds-gray/10 p-3 rounded flex flex-wrap justify-between items-center border border-hounds-gray/30 hover:border-hounds-kellyGreen/30 transition-all animate-in slide-in-from-left-2 fade-in">
                                             <div className="flex flex-col">
-                                                <span className="font-brand text-white uppercase text-lg leading-none mb-1">{s.name}</span>
+                                                <span className="font-brand text-white uppercase text-xl leading-none mb-1">{s.name}</span>
                                                 <div className="flex items-center gap-2 cursor-pointer group" onClick={() => toggleRecoveryType(s.uniqueId)}>
                                                     <RefreshCw className="w-2.5 h-2.5 text-hounds-kellyGreen group-hover:rotate-180 transition-transform duration-500" />
                                                     <span className="text-[10px] font-bold text-hounds-kellyGreen uppercase tracking-tighter">{s.customRecoveryType} Interval</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex flex-col items-center">
-                                                    <label className="text-[8px] uppercase font-bold text-hounds-gray">Sets</label>
-                                                    <input type="number" min="1" value={s.sets || 1} onChange={e=>updateSessionItem(s.uniqueId, 'sets', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-10 text-center rounded text-white font-mono text-xs" />
+                                            <div className="flex items-center gap-4 bg-hounds-darkGray/40 p-2 rounded-lg border border-hounds-gray/20">
+                                                {/* VISIBLE SETS & REPS GROUP */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex flex-col items-center">
+                                                        <label className="text-[9px] uppercase font-bold text-hounds-brightBlue mb-1">Sets</label>
+                                                        <input type="number" min="1" value={s.sets || 1} onChange={e=>updateSessionItem(s.uniqueId, 'sets', Number(e.target.value))} className="bg-hounds-darkGray border-2 border-hounds-brightBlue/40 w-12 text-center rounded py-1 text-white font-brand text-lg focus:border-hounds-brightBlue outline-none transition-all" />
+                                                    </div>
+                                                    <span className="text-hounds-gray text-lg pt-4 font-brand">✕</span>
+                                                    <div className="flex flex-col items-center">
+                                                        <label className="text-[9px] uppercase font-bold text-hounds-kellyGreen mb-1">Reps</label>
+                                                        <input type="number" value={s.reps} onChange={e=>updateSessionItem(s.uniqueId, 'reps', Number(e.target.value))} className="bg-hounds-darkGray border-2 border-hounds-kellyGreen/40 w-12 text-center rounded py-1 text-white font-brand text-lg focus:border-hounds-kellyGreen outline-none transition-all" />
+                                                    </div>
+                                                    <span className="text-hounds-gray text-lg pt-4 font-brand">✕</span>
+                                                    <div className="flex flex-col items-center">
+                                                        <label className="text-[9px] uppercase font-bold text-hounds-lightGray mb-1">Meters</label>
+                                                        <input type="number" value={s.customDist} onChange={e=>updateSessionItem(s.uniqueId, 'customDist', Number(e.target.value))} className="bg-hounds-darkGray border-2 border-hounds-gray/40 w-20 text-center rounded py-1 text-white font-brand text-lg focus:border-hounds-white outline-none transition-all" />
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-col items-center">
-                                                    <label className="text-[8px] uppercase font-bold text-hounds-gray">Reps</label>
-                                                    <input type="number" value={s.reps} onChange={e=>updateSessionItem(s.uniqueId, 'reps', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-10 text-center rounded text-white font-mono text-xs" />
-                                                </div>
-                                                <div className="flex flex-col items-center">
-                                                    <label className="text-[8px] uppercase font-bold text-hounds-gray">Meters</label>
-                                                    <input type="number" value={s.customDist} onChange={e=>updateSessionItem(s.uniqueId, 'customDist', Number(e.target.value))} className="bg-hounds-darkGray border border-hounds-gray/50 w-16 text-center rounded text-white font-mono text-xs" />
-                                                </div>
-                                                <button onClick={()=>removeDrillFromSession(s.uniqueId)} className="text-gray-500 hover:text-red-400 p-2 transition-colors"><Trash className="w-5 h-5" /></button>
+                                                <button onClick={()=>removeDrillFromSession(s.uniqueId)} className="text-gray-500 hover:text-red-400 p-2 transition-all hover:bg-red-400/10 rounded-lg ml-2"><Trash className="w-5 h-5" /></button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="w-64 flex flex-col justify-end gap-3 pb-2">
-                                    <button onClick={handlePrintSession} className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray p-3 rounded-lg font-bold w-full flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"><Printer className="w-4 h-4"/> PRINT PDF</button>
-                                    <button onClick={()=>setSession([])} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-3 rounded-lg font-bold w-full uppercase tracking-widest text-xs">Clear All</button>
+                                    <button onClick={handlePrintSession} className="bg-hounds-brightBlue hover:bg-blue-400 text-hounds-darkGray p-3 rounded-lg font-bold w-full flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 uppercase font-brand tracking-widest text-lg"><Printer className="w-5 h-5"/> Print Session</button>
+                                    <button onClick={()=>setSession([])} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 p-3 rounded-lg font-bold w-full transition-all uppercase tracking-widest text-xs">Clear All</button>
                                 </div>
                             </div>
                         )}
@@ -515,9 +520,9 @@
                     <footer className="max-w-7xl mx-auto p-12 text-center text-hounds-gray/20 text-[10px] font-mono border-t border-hounds-gray/10 mt-12">
                         <p className="mb-4 font-bold">CHICAGO HOUNDS APP ID: {appId}</p>
                         <div className="flex flex-wrap justify-center gap-6 mt-4">
-                            <button onClick={handleExportLocal} className="flex items-center gap-2 hover:text-orange-400 transition-colors uppercase font-bold"><Download className="w-3 h-3"/> Save Library As File</button>
-                            <label className="flex items-center gap-2 cursor-pointer hover:text-hounds-brightBlue transition-colors uppercase font-bold">
-                                <FileUp className="w-3 h-3"/> Open Library File
+                            <button onClick={handleExportLocal} className="flex items-center gap-2 hover:text-orange-400 transition-colors uppercase font-bold text-[11px]"><Download className="w-3.5 h-3.5"/> Export Local Drills (.json)</button>
+                            <label className="flex items-center gap-2 cursor-pointer hover:text-hounds-brightBlue transition-colors uppercase font-bold text-[11px]">
+                                <FileUp className="w-3.5 h-3.5"/> Import Drills File
                                 <input type="file" ref={fileInputRef} onChange={handleImportLocal} className="hidden" accept=".json" />
                             </label>
                         </div>
